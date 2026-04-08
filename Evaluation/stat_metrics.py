@@ -100,6 +100,10 @@ def diversity_ratio(corpus_features, coreset_features, max_samples=2000):
 
 
 def get_kl_divergence(Y_coreset, Y, output_file="kl_results.txt"):
+    from scipy.stats import entropy
+    from scipy.spatial.distance import jensenshannon
+    import matplotlib.pyplot as plt
+    import numpy as np
     """
 
      Not embeddings , takes the labels  
