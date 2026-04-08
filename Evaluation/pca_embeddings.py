@@ -1,4 +1,12 @@
+from sklearn.neighbors import NearestNeighbors
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.decomposition import PCA
 
+from scipy.stats import entropy, wasserstein_distance
+from scipy.spatial.distance import jensenshannon
+
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 def wasserstein_pca(corpus_features, coreset_features, n_components=10):
     """

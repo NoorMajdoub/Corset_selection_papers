@@ -1,6 +1,14 @@
 
 import numpy as np
+from sklearn.neighbors import NearestNeighbors
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.decomposition import PCA
 
+from scipy.stats import entropy, wasserstein_distance
+from scipy.spatial.distance import jensenshannon
+
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 """
 Label frequency   get_labels_freq
