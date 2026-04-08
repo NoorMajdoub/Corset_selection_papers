@@ -104,10 +104,7 @@ def get_kl_divergence(Y_coreset, Y, output_file="kl_results.txt"):
     from scipy.spatial.distance import jensenshannon
     import matplotlib.pyplot as plt
     import numpy as np
-    """
-
-     Not embeddings , takes the labels  
-    """
+  
     CLASS_NAMES = [
         "atelectasis", "cardiomegaly", "effusion",
         "infiltration", "mass", "nodule", "pneumonia",
