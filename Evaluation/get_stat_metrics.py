@@ -17,7 +17,7 @@ def run_and_save_stat_tests(features_corpus, features_coreset, Y, Y_coreset):
     r2 = get_kl_divergence(Y_coreset, Y)          # drops the file save for now
     r3 = hausdorff_coverage(features_corpus, features_coreset)
     r4 = mmd_rbf(features_corpus, features_coreset)
-    r5 = diversity_ratio(features_corpus, features_coreset)
+   
     r6, _ = wasserstein_pca(features_corpus, features_coreset)
 
     return {
@@ -25,7 +25,7 @@ def run_and_save_stat_tests(features_corpus, features_coreset, Y, Y_coreset):
         'kl'              : r2,
         'hausdorff'       : r3,
         'mmd'             : r4,
-        'diversity'       : r5,
+  
         'wasserstein_pca' : r6,
     }
 
