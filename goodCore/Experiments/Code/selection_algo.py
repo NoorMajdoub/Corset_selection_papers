@@ -104,8 +104,8 @@ class GreedyCoreset:
                     dist = np.linalg.norm(self.corpus[i] - self.corpus[best_t])
                     if dist < min_dists[i]:
                         min_dists[i] = dist
-            
-            print(f"Selected {len(C)}/{corset_size} tuples")
+            if len(C)%100==0:
+                    print(f"Selected {len(C)}/{corset_size} tuples")
         
         return C
     
