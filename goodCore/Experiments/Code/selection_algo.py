@@ -10,14 +10,14 @@ from transformers import AutoImageProcessor, AutoModel
 
 
 class GreedyCoreset:
-    def __init__(self, corpus, n_neighbors,labels=None):
+    def __init__(self, corpus, metric,n_neighbors,labels=None):
         self.corpus = np.array(corpus)
         self.labels = labels
         self.n = len(corpus)
         
         # you use nn later to get the 100 nearest neighbors for each dp
         #min(100, self.n)
-        self.nn = NearestNeighbors(n_neighbors=n_neighbors, metric='euclidean')
+        self.nn = NearestNeighbors(n_neighbors=n_neighbors, metric=metric)
         self.nn.fit(self.corpus)
     
     def select(self, corset_size=500, sample_size=100, per_label=False): #what you cocall
@@ -156,8 +156,8 @@ def get_samples(corpus, C, size_samples):
     if len(candidates) <= size_samples:
         return candidates
     return random.sample(candidates, size_samples)
-def get_selector(features_corset, labels_corset,n_neighbors=100 ): 
-    selector = GreedyCoreset(features_corset, labels_corset,n_neighbors )
+def get_selector(features_corset, labels_corset,metric='euclidean',n_neighbors=100 ): 
+    selector = GreedyCoreset(features_corset, labels_corset,metric,n_neighbors )
     return selector
 def select_corset(selector, corset_size=1120, sample_size=100, per_label=False):
     coreset_indices = selector.select(corset_size=1120, sample_size=100)
