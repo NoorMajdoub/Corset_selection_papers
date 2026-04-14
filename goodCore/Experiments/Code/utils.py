@@ -60,7 +60,6 @@ def get_model_radDino():
     #most relaibel model for now is the raddino
     model = AutoModel.from_pretrained("microsoft/rad-dino")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = model.to(device)
     return model
