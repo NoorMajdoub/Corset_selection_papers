@@ -10,7 +10,7 @@ from transformers import AutoImageProcessor, AutoModel
 
 
 class GreedyCoreset:
-    def __init__(self, corpus, metric,n_neighbors,labels=None):
+    def __init__(self, corpus,labels, metric,n_neighbors):
         self.corpus = np.array(corpus)
         self.labels = labels
         self.n = len(corpus)
