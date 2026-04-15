@@ -125,8 +125,8 @@ class GreedyCoreset:
         
         return weights
 
-def get_samples(corpus, C, size_samples):
-    candidates = list(set(range(len(corpus))) - set(C))
+def get_samples(corpus, C_set, size_samples):
+    candidates = list(set(range(len(corpus))) - C_set)
     if len(candidates) <= size_samples:
         return candidates
     return random.sample(candidates, size_samples)
