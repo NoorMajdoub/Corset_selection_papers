@@ -14,7 +14,7 @@ class GreedyCoreset:
         self.corpus = np.array(corpus)
         self.labels = labels
         self.n = len(corpus)
-        
+        self.metric = metric
         # you use nn later to get the 100 nearest neighbors for each dp
         #min(100, self.n)
         self.nn = NearestNeighbors(n_neighbors=n_neighbors, metric=metric)
@@ -40,12 +40,12 @@ class GreedyCoreset:
         if corset_size > 0:
             # Pick point farthest from mean (diverse start)
             mean = np.mean(self.corpus, axis=0)
-            first_idx = np.argmax([np.linalg.norm(x - mean) for x in self.corpus])
+            first_idx = np.argmax([self._distance(x, mean) for x in self.corpus])
             C.append(first_idx)
             
             # Update min distances
             for i in range(self.n):
-                min_dists[i] = np.linalg.norm(self.corpus[i] - self.corpus[first_idx])
+                min_dists[i] = self._distance(self.corpus[i], self.corpus[first_idx])
         
         while len(C) < corset_size:
             # Sample candidates (not in C)
@@ -101,7 +101,7 @@ class GreedyCoreset:
                     since you added new point to corset recompute to see 
                     """
                     #PP
-                    dist = np.linalg.norm(self.corpus[i] - self.corpus[best_t])
+                    dist = self._distance(self.corpus[i], self.corpus[best_t])
                     if dist < min_dists[i]:
                         min_dists[i] = dist
             if len(C)%100==0:
