@@ -42,10 +42,12 @@ class GreedyCoreset:
     
         while len(C) < corset_size:
             candidates = get_samples(self.corpus, C_set, size_samples=sample_size)
+            print("i")
             best_t = None
             best_utility = -np.inf
     
             for t in candidates:
+                print("j")
                 dist_to_t, indexes = self.nn.kneighbors(
                     self.corpus[t].reshape(1, -1),
                     return_distance=True
