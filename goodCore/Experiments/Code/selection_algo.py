@@ -26,64 +26,88 @@ class GreedyCoreset:
         else:
             return self._select(corset_size, sample_size)
     
-    def _select(self, corset_size, sample_size):
+    def _select(self, corset_size, sample_size):  #the core corset selection algo 
         C = []
-        C_set = set()  # for O(1) lookups
+        
+        # array to keep for each datapoint in corpus the min distance we have from a point to it
+        #initialse with sth huge
         min_dists = np.full(self.n, np.inf)
-    
-        # Vectorized first point
-        mean = np.mean(self.corpus, axis=0)
-        first_idx = int(np.argmax(np.linalg.norm(self.corpus - mean, axis=1)))
-        C.append(first_idx)
-        C_set.add(first_idx)
-    
-        # Vectorized initial min_dists update
-        min_dists = np.linalg.norm(self.corpus - self.corpus[first_idx], axis=1)
-    
+        """
+        min_dist is storing for each point the closest representative to it from points from C
+        """
+        
+        # First point: pick farthest from center or random
+        if corset_size > 0:
+            # Pick point farthest from mean (diverse start)
+            mean = np.mean(self.corpus, axis=0)
+            first_idx = np.argmax([np.linalg.norm(x - mean) for x in self.corpus])
+            C.append(first_idx)
+            
+            # Update min distances
+            for i in range(self.n):
+                min_dists[i] = np.linalg.norm(self.corpus[i] - self.corpus[first_idx])
+        
         while len(C) < corset_size:
-            candidates = get_samples(self.corpus, C_set, size_samples=sample_size)
-            print("i")
+            # Sample candidates (not in C)
+            """ candidates = list(set(range(self.n)) - set(C))
+            if len(candidates) > sample_size:
+                candidates = random.sample(candidates, sample_size)"""
+            candidates=get_samples(self.corpus, C, size_samples=sample_size)
             best_t = None
             best_utility = -np.inf
-    
+            
             for t in candidates:
-                print("j")
+                # Fast utility computation using nearest neighbors
+                # Get distances from t to all points (approximate)
                 dist_to_t, indexes = self.nn.kneighbors(
-                    self.corpus[t].reshape(1, -1),
+                    self.corpus[t].reshape(1, -1), 
+                  #  n_neighbors=self.n,  #why specify n == everyone 
                     return_distance=True
                 )
                 dist_to_t = dist_to_t[0]
                 indexes = indexes[0]
-    
-                # Vectorized reduction — no Python loop over neighbors
-                mask = np.array([i not in C_set for i in indexes])
-                valid_idx = indexes[mask]
-                valid_dists = dist_to_t[mask]
-                reduction = np.sum(np.maximum(0, min_dists[valid_idx] - valid_dists))
-    
+
+                # Compute reduction
+                reduction = 0
+                l_neighbors=len(dist_to_t)
+                """
+                amoung the k closest neighbors we picked we are gonna see 
+                which of them is the cloest to the rest of datapoitns
+                from the main corpus 
+                """
+                for j, i in enumerate(indexes): # i is dataset index  and j positiion in neigh list 
+                    if i in C:
+                        continue
+                    if dist_to_t[j] < min_dists[i]:
+                        #this bewlo is teh utility
+                        # E(c) -E[c+t]
+                        reduction += min_dists[i] - dist_to_t[j]
+                #reduction is the "imporvment " it will bring to the corset
+                #
                 if reduction > best_utility:
                     best_utility = reduction
                     best_t = t
-    
+            
             if best_t is not None:
                 C.append(best_t)
-                C_set.add(best_t)
-    
-                # Vectorized min_dists update
-                new_dists = np.linalg.norm(self.corpus - self.corpus[best_t], axis=1)
-                min_dists = np.minimum(min_dists, new_dists)
-                min_dists[best_t] = np.inf  # exclude C points
-    
-            if len(C) % 100 == 0:
-                print(f"Selected {len(C)}/{corset_size} tuples")
-    
-        return C
+                
+                # Update min distances
+                for i in range(self.n):
+                    if i in C:
+                        continue
+                    """
+                    here you added new point t to the corset , and remember that mindist 
+                    is computing dis based on points in the corset 
+                    since you added new point to corset recompute to see 
+                    """
+                    #PP
+                    dist = np.linalg.norm(self.corpus[i] - self.corpus[best_t])
+                    if dist < min_dists[i]:
+                        min_dists[i] = dist
+            if len(C)%100==0:
+                    print(f"Selected {len(C)}/{corset_size} tuples")
         
-      
-            
-            
-
-            
+        return C
     
     def _select_per_label(self, corset_size, sample_size):
         unique_labels = np.unique(self.labels)  #get all of out labels here they are 
@@ -127,8 +151,8 @@ class GreedyCoreset:
         
         return weights
 
-def get_samples(corpus, C_set, size_samples):
-    candidates = list(set(range(len(corpus))) - C_set)
+def get_samples(corpus, C, size_samples):
+    candidates = list(set(range(len(corpus))) - set(C))
     if len(candidates) <= size_samples:
         return candidates
     return random.sample(candidates, size_samples)
