@@ -1,6 +1,6 @@
 import numpy as np
 
-def random_subset(X_train, Y_train, fraction=0.05, seed=42, save_path="subset_indices.npy"):
+def random_subset(X_train, Y_train,save_path, fraction=0.05, seed=42):
     """
     Randomly samples a fraction of the training set and saves the indices.
     Returns:
@@ -27,10 +27,10 @@ def random_subset(X_train, Y_train, fraction=0.05, seed=42, save_path="subset_in
     return X_subset, Y_subset, indices
 
 
-# --- Usage ---
-X_sub, Y_sub, idx = sample_train_subset(X_train_s, Y_train_s, fraction=0.05)
+# Usa ---
+X_sub, Y_sub, idx = random_subset(X_train_s, Y_train_s,"random_indices_5.npy", fraction=0.05)
 
-# --- Later, to reload ---
-idx_loaded = np.load("subset_indices.npy")
+# to reload ---
+idx_loaded = np.load("random_indices_5.npy")
 X_sub = X_train_s[idx_loaded]
 Y_sub = Y_train_s[idx_loaded]
