@@ -19,7 +19,12 @@ class GreedyCoreset:
         #min(100, self.n)
         self.nn = NearestNeighbors(n_neighbors=n_neighbors, metric=metric)
         self.nn.fit(self.corpus)
-    
+    def _dist(self, a, b):
+                if self.metric == "euclidean":
+                    return np.linalg.norm(a - b)
+                elif self.metric == "cosine":
+                    return 1 - np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+        
     def select(self, corset_size=500, sample_size=100, per_label=False): #what you cocall
         if per_label and self.labels is not None:
             return self._select_per_label(corset_size, sample_size)
