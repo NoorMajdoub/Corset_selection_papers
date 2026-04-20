@@ -36,17 +36,17 @@ class GreedyCoreset:
         min_dist is storing for each point the closest representative to it from points from C
         """
         
-        # First point: pick farthest from center or random
+        # This section of code for the initialisation of the first point to start working with 
         if corset_size > 0:
-            # Pick point farthest from mean (diverse start)
+            # Pick point farthest from mean (diverse start)= fixed methode 
             mean = np.mean(self.corpus, axis=0)
             first_idx = np.argmax([self._distance(x, mean) for x in self.corpus])
             C.append(first_idx)
             
-            # Update min distances
+        # Update min distances 
             for i in range(self.n):
                 min_dists[i] = self._distance(self.corpus[i], self.corpus[first_idx])
-        
+        #-----------------------------------------------------------------------------
         while len(C) < corset_size:
             # Sample candidates (not in C)
             """ candidates = list(set(range(self.n)) - set(C))
