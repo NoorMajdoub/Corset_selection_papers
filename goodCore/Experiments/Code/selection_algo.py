@@ -168,17 +168,12 @@ def get_samples(corpus, C_set, size_samples):
     if len(candidates) <= size_samples:
         return candidates
     return random.sample(candidates, size_samples)
-def get_selector(features_corset, labels_corset,metric='euclidean',n_neighbors=100 ): 
-    selector = GreedyCoreset(features_corset, labels_corset,metric,n_neighbors )
-    return selector
-def select_corset(selector, corset_size=1120, sample_size=100, per_label=False):
-    coreset_indices = selector.select(corset_size=1120, sample_size=100)
-    return coreset_indices
+
 def save_corset_indexes(coreset_indices,corset_size,sample_size,metric,knn):
     np.save(f"coreset{sample_size}_{corset_size}_{metric}_{knn}.npy", coreset_indices)
 def restore_corset(file_name,Y,X):
     indexes=np.load(file_name)     
     indexes = indexes.astype(int).tolist()
-    X_coreset = X[indices]
-    Y_coreset = Y[indices] 
+    X_coreset = X[indexes]
+    Y_coreset = Y[indexes] 
     return X_coreset, Y_coreset
