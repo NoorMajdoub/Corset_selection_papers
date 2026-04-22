@@ -44,9 +44,8 @@ class GreedyCoreset:
             point_norm = point / (np.linalg.norm(point) + 1e-10)
             return 1 - self.corpus @ point_norm  
     def select(self, corset_size=500, sample_size=100, per_label=False): #what you cocall
-        if per_label and self.labels is not None:
-            return self._select_per_label(corset_size, sample_size)
-        else:
+        
+        
             return self._select(corset_size, sample_size)
     
     def _select(self, corset_size, sample_size):  #the core corset selection algo 
@@ -63,6 +62,7 @@ class GreedyCoreset:
         if corset_size > 0:
             # Pick point farthest from mean (diverse start)= fixed methode 
             mean = np.mean(self.corpus, axis=0)
+            mean = mean / (np.linalg.norm(mean) + 1e-10)
             first_idx = int(np.argmax(self._compute_all_dists(mean)))
             C.append(first_idx)  
             set_c.add(first_idx)
@@ -87,7 +87,10 @@ class GreedyCoreset:
                 dist_to_t, indexes = self.index.search(query, self.n_neighbors)
                 dist_to_t = dist_to_t[0]
                 indexes = indexes[0]
-
+                if self.metric == 'cosine':
+                        dist_to_t = 1 - dist_to_t
+                if self.metric == 'euclidean':
+                        dist_to_t = np.sqrt(dist_to_t) 
                 # Compute reduction
                 reduction = 0
                 l_neighbors=len(dist_to_t)
@@ -121,47 +124,9 @@ class GreedyCoreset:
         
         return C
     
-    def _select_per_label(self, corset_size, sample_size):
-        unique_labels = np.unique(self.labels)  #get all of out labels here they are 
-        #update per the frequency of the class
-        
-        C = []
-        
-        for label in unique_labels:
-            label_indices = np.where(self.labels == label)[0]
-            label_ratio = len(label_indices) / self.n
-            label_K = max(1, int(corset_size * label_ratio))
-            
-            if label_K > 0 and len(label_indices) > 0:
-                # Create sub-selector for this label
-                label_selector = GreedyCoreset(
-                    self.corpus[label_indices], 
-                    labels=None
-                )
-                label_C = label_selector._select(label_K, sample_size)
-                
-                # Map back to original indices
-                C.extend(label_indices[label_C].tolist())
-        
-        return C
     
-    def compute_weights(self, C):
-        """Compute weights for coreset points"""
-        weights = np.zeros(len(C))
-        
-        for i in range(self.n):
-            # Find closest coreset point
-            min_dist = np.inf
-            closest_idx = -1
-            for j, c in enumerate(C):
-                dist = np.linalg.norm(self.corpus[i] - self.corpus[c])
-                if dist < min_dist:
-                    min_dist = dist
-                    closest_idx = j
-            
-            weights[closest_idx] += 1
-        
-        return weights
+    
+   
 
 def get_samples(corpus, C_set, size_samples):
     candidates = list(set(range(len(corpus))) - C_set)
