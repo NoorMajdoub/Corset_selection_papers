@@ -45,7 +45,7 @@ class GreedyCoreset:
             return 1 - self.corpus @ point_norm  
     def select(self, corset_size, sample_size, per_label=False): #what you cocall
         
-            print(sample_size,sample_size,self.metric)
+            print(sample_size,self.n_neighbors,self.metric)
             return self._select(corset_size, sample_size)
     
     def _select(self, corset_size, sample_size):  #the core corset selection algo 
