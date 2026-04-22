@@ -43,9 +43,9 @@ class GreedyCoreset:
         elif self.metric == 'cosine':
             point_norm = point / (np.linalg.norm(point) + 1e-10)
             return 1 - self.corpus @ point_norm  
-    def select(self, corset_size=500, sample_size=100, per_label=False): #what you cocall
+    def select(self, corset_size, sample_size, per_label=False): #what you cocall
         
-        
+            print(sample_size,sample_size,self.metric)
             return self._select(corset_size, sample_size)
     
     def _select(self, corset_size, sample_size):  #the core corset selection algo 
