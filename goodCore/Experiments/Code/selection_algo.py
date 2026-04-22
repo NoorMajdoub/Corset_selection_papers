@@ -7,24 +7,42 @@ import torch
 import torch.nn as nn
 from torchvision import transforms
 from transformers import AutoImageProcessor, AutoModel
+import faiss
 
 
 class GreedyCoreset:
     def __init__(self, corpus,labels, metric,n_neighbors):
-        self.corpus = np.array(corpus)
+        self.corpus = np.array(corpus, dtype=np.float32)  #cause fais needs flaot32
         self.labels = labels
         self.n = len(corpus)
         self.metric = metric
-        # you use nn later to get the 100 nearest neighbors for each dp
-        #min(100, self.n)
-        self.nn = NearestNeighbors(n_neighbors=n_neighbors, metric=metric)
-        self.nn.fit(self.corpus)
+        self.n_neighbors = n_neighbors
+        # Build FAISS index
+        d = self.corpus.shape[1]  # 768
+        if metric == 'cosine':
+            # normalize first, then use inner product (= cosine on normalized vecs)
+            faiss.normalize_L2(self.corpus)
+            self.index = faiss.IndexFlatIP(d)
+        else:  # euclidean
+            self.index = faiss.IndexFlatL2(d)
+        
+        # Move to GPU if available
+        if faiss.get_num_gpus() > 0:
+            self.index = faiss.index_cpu_to_all_gpus(self.index)
+        
+        self.index.add(self.corpus)
+
     def _dist(self, a, b):
                 if self.metric == "euclidean":
                     return np.linalg.norm(a - b)
                 elif self.metric == "cosine":
                     return 1 - np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-        
+    def _compute_all_dists(self, point):
+        if self.metric == 'euclidean':
+            return np.linalg.norm(self.corpus - point, axis=1)
+        elif self.metric == 'cosine':
+            point_norm = point / (np.linalg.norm(point) + 1e-10)
+            return 1 - self.corpus @ point_norm  
     def select(self, corset_size=500, sample_size=100, per_label=False): #what you cocall
         if per_label and self.labels is not None:
             return self._select_per_label(corset_size, sample_size)
@@ -45,11 +63,11 @@ class GreedyCoreset:
         if corset_size > 0:
             # Pick point farthest from mean (diverse start)= fixed methode 
             mean = np.mean(self.corpus, axis=0)
-            first_idx = int(np.argmax(np.linalg.norm(self.corpus - mean, axis=1)))
+            first_idx = int(np.argmax(self._compute_all_dists(mean)))
             C.append(first_idx)  
             set_c.add(first_idx)
             # Update min distances 
-            min_dists = np.linalg.norm(self.corpus - self.corpus[first_idx], axis=1)
+            min_dists = self._compute_all_dists(self.corpus[first_idx])
 
         #-----------------------------------------------------------------------------
         while len(C) < corset_size:
@@ -64,11 +82,9 @@ class GreedyCoreset:
             for t in candidates:
                 # Fast utility computation using nearest neighbors
                 # Get distances from t to all points (approximate)
-                dist_to_t, indexes = self.nn.kneighbors(
-                    self.corpus[t].reshape(1, -1), 
-                  #  n_neighbors=self.n,  #why specify n == everyone 
-                    return_distance=True
-                )
+            
+                query = self.corpus[t].reshape(1, -1)
+                dist_to_t, indexes = self.index.search(query, self.n_neighbors)
                 dist_to_t = dist_to_t[0]
                 indexes = indexes[0]
 
@@ -96,7 +112,7 @@ class GreedyCoreset:
             if best_t is not None:
                    C.append(best_t)
                    set_c.add(best_t)
-                   dists_to_new = np.linalg.norm(self.corpus - self.corpus[best_t], axis=1)
+                   dists_to_new = self._compute_all_dists(self.corpus[best_t])
                    min_dists = np.minimum(min_dists, dists_to_new)
 
 
